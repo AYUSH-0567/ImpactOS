@@ -1,11 +1,9 @@
 import { Router, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { PrismaClient } from '@prisma/client';
-import { authenticateToken, AuthenticatedRequest, requirePermission } from '../middleware/auth';
+import { prisma } from '../db.js';
 
 const router = Router();
-const prisma = new PrismaClient();
 const JWT_SECRET = process.env.JWT_SECRET || 'impactos_production_secret_key_2026_jwt_auth';
 
 // Helper setting HttpOnly Session Cookie
