@@ -58,17 +58,25 @@ app.use(helmet({
   crossOriginResourcePolicy: { policy: "cross-origin" }
 }));
 
-// 3. PRODUCTION CORS SECURITY
-const allowedOrigins = process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',') : ['http://localhost:5173', 'http://localhost:5000'];
+// 3. PRODUCTION CORS SECURITY & CREDENTIALS
+const allowedOrigins = process.env.CORS_ORIGIN
+  ? process.env.CORS_ORIGIN.split(',').map(o => o.trim())
+  : ['https://impactos-eta.vercel.app', 'http://localhost:5173', 'http://localhost:5000'];
+
+console.log('🔒 Production CORS Allowed Origins:', JSON.stringify(allowedOrigins));
+
 app.use(cors({
   origin: (origin, callback) => {
-    if (!origin || allowedOrigins.includes(origin) || allowedOrigins.includes('*')) {
+    if (!origin || allowedOrigins.includes(origin) || allowedOrigins.includes('*') || origin.endsWith('.vercel.app')) {
       callback(null, true);
     } else {
+      console.warn(`[CORS REJECTED] Origin ${origin} not in allowed list:`, allowedOrigins);
       callback(new Error(`CORS Violation: Origin ${origin} not permitted.`));
     }
   },
-  credentials: true
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'X-CSRF-Token']
 }));
 
 app.use(cookieParser());
