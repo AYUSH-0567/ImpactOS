@@ -1,0 +1,452 @@
+// Prisma Schema for ImpactOS Multi-Tenant NGO Data Architecture
+// Configured for SQLite / PostgreSQL database deployment
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum RoleEnum {
+  ADMIN
+  DIRECTOR
+  FINANCE_LEAD
+  PROGRAM_MANAGER
+  VOLUNTEER_MANAGER
+  DONOR_MANAGER
+  DATA_ANALYST
+  VIEWER
+}
+
+enum ProgramCategoryEnum {
+  EDUCATION
+  HEALTHCARE
+  WOMEN_EMPOWERMENT
+  SKILL_DEVELOPMENT
+  ENVIRONMENT
+}
+
+enum ProjectStatusEnum {
+  ON_TRACK
+  AT_RISK
+  DELAYED
+  COMPLETED
+}
+
+enum RiskLevelEnum {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum DonorTypeEnum {
+  CSR_CORPORATE
+  INDIVIDUAL
+  FOUNDATION_GRANT
+  GOVERNMENT
+}
+
+model Organization {
+  id               String                   @id @default(uuid())
+  name             String
+  fcraRegId        String                   @unique
+  tax80GId         String?
+  headquarters     String
+  createdAt        DateTime                 @default(now())
+  updatedAt        DateTime                 @updatedAt
+
+  users            User[]
+  invitations      OrganizationInvitation[]
+  projects         Project[]
+  programs         Program[]
+  donors           Donor[]
+  fundingSources   FundingSource[]
+  beneficiaries    Beneficiary[]
+  volunteers       Volunteer[]
+  notifications    Notification[]
+
+  @@map("organizations")
+}
+
+model User {
+  id                     String       @id @default(uuid())
+  email                  String       @unique
+  passwordHash           String
+  name                   String
+  phone                  String?
+  role                   RoleEnum     @default(PROGRAM_MANAGER)
+  organizationId         String
+  organization           Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  isEmailVerified        Boolean      @default(false)
+  emailVerificationToken String?      @unique
+  passwordResetToken     String?      @unique
+  passwordResetExpires   DateTime?
+  createdAt              DateTime     @default(now())
+  updatedAt              DateTime     @updatedAt
+
+  auditLogs              AuditLog[]
+
+  @@map("users")
+}
+
+model OrganizationInvitation {
+  id             String       @id @default(uuid())
+  email          String
+  role           RoleEnum     @default(PROGRAM_MANAGER)
+  token          String       @unique
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  invitedBy      String
+  expiresAt      DateTime
+  status         String       @default("PENDING")
+  createdAt      DateTime     @default(now())
+
+  @@map("organization_invitations")
+}
+
+model Program {
+  id             String              @id @default(uuid())
+  name           String
+  vertical       ProgramCategoryEnum
+  budget         Float               @default(0)
+  startDate      DateTime?
+  endDate        DateTime?
+  objectives     String?
+  kpis           String?
+  status         String              @default("ACTIVE") // ACTIVE, ARCHIVED
+  organizationId String
+  organization   Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+
+  projects       Project[]
+  beneficiaries  Beneficiary[]
+  donations      Donation[]
+  events         VolunteerEvent[]
+  impactMetrics  ImpactMetric[]
+
+  @@map("programs")
+}
+
+model Project {
+  id                   String            @id @default(uuid())
+  projectCode          String            @unique
+  name                 String
+  category             ProgramCategoryEnum
+  state                String
+  district             String
+  lead                 String
+  budget               Float
+  spent                Float             @default(0)
+  progress             Int               @default(0)
+  beneficiariesTarget  Int
+  beneficiariesReached Int               @default(0)
+  startDate            DateTime
+  endDate              DateTime
+  status               ProjectStatusEnum @default(ON_TRACK)
+  risk                 RiskLevelEnum     @default(LOW)
+  description          String
+  organizationId       String
+  organization         Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  programId            String?
+  program              Program?          @relation(fields: [programId], references: [id])
+  createdAt            DateTime          @default(now())
+  updatedAt            DateTime          @updatedAt
+  createdBy            String?
+
+  expenses             Expense[]
+  milestones           ProjectMilestone[]
+
+  @@index([organizationId])
+  @@index([organizationId, status])
+  @@map("projects")
+}
+
+model ProjectMilestone {
+  id        String   @id @default(uuid())
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  title     String
+  completed Boolean  @default(false)
+  dueDate   DateTime
+  createdAt DateTime @default(now())
+
+  @@map("project_milestones")
+}
+
+model Beneficiary {
+  id                   String                @id @default(uuid())
+  beneficiaryCode      String                @unique
+  name                 String
+  gender               String
+  ageGroup             String
+  state                String
+  district             String
+  programId            String?
+  program              Program?              @relation(fields: [programId], references: [id], onDelete: SetNull)
+  registrationDate     DateTime              @default(now())
+  status               String                @default("Active")
+  incomeTier           String?
+  phone                String?
+  address              String?
+  documents            BeneficiaryDocument[]
+  attendance           BeneficiaryAttendance[]
+  enrollments          BeneficiaryEnrollment[]
+  history              BeneficiaryHistory[]
+  organizationId       String
+  organization         Organization          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
+
+  @@index([organizationId])
+  @@index([district])
+  @@index([status])
+  @@index([organizationId, status])
+  @@map("beneficiaries")
+}
+
+model BeneficiaryDocument {
+  id            String      @id @default(uuid())
+  beneficiaryId String
+  beneficiary   Beneficiary @relation(fields: [beneficiaryId], references: [id], onDelete: Cascade)
+  fileName      String
+  fileUrl       String
+  fileType      String
+  fileSize      Int
+  uploadedAt    DateTime    @default(now())
+
+  @@map("beneficiary_documents")
+}
+
+model BeneficiaryAttendance {
+  id            String      @id @default(uuid())
+  beneficiaryId String
+  beneficiary   Beneficiary @relation(fields: [beneficiaryId], references: [id], onDelete: Cascade)
+  date          DateTime    @default(now())
+  status        String      @default("PRESENT") // PRESENT, ABSENT, EXCUSED, LATE
+  notes         String?
+  createdAt     DateTime    @default(now())
+
+  @@map("beneficiary_attendance")
+}
+
+model BeneficiaryEnrollment {
+  id            String      @id @default(uuid())
+  beneficiaryId String
+  beneficiary   Beneficiary @relation(fields: [beneficiaryId], references: [id], onDelete: Cascade)
+  programName   String
+  status        String      @default("ENROLLED") // ENROLLED, COMPLETED, DROPPED
+  enrolledAt    DateTime    @default(now())
+
+  @@map("beneficiary_enrollments")
+}
+
+model BeneficiaryHistory {
+  id            String      @id @default(uuid())
+  beneficiaryId String
+  beneficiary   Beneficiary @relation(fields: [beneficiaryId], references: [id], onDelete: Cascade)
+  title         String
+  description   String
+  category      String      @default("AUDIT") // REGISTRATION, ENROLLMENT, DOCUMENT, ATTENDANCE
+  createdAt     DateTime    @default(now())
+
+  @@map("beneficiary_history")
+}
+
+model Donor {
+  id               String              @id @default(uuid())
+  donorCode        String              @unique
+  name             String
+  type             DonorTypeEnum
+  location         String
+  contactPerson    String?
+  email            String?
+  phone            String?
+  panTaxNo         String?
+  totalDonated     Float               @default(0)
+  lastDonationDate DateTime?
+  frequency        String              @default("Monthly") // One-time, Monthly, Quarterly, Annual
+  status           String              @default("Active")
+  primaryProgram   ProgramCategoryEnum
+  organizationId   String
+  organization     Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
+
+  donations        Donation[]
+  agreements       DonorAgreement[]
+
+  @@map("donors")
+}
+
+model DonorAgreement {
+  id          String   @id @default(uuid())
+  donorId     String
+  donor       Donor    @relation(fields: [donorId], references: [id], onDelete: Cascade)
+  title       String
+  agreementNo String   @unique
+  grantAmount Float
+  startDate   DateTime
+  endDate     DateTime
+  fileUrl     String?
+  status      String   @default("ACTIVE")
+  createdAt   DateTime @default(now())
+
+  @@map("donor_agreements")
+}
+
+model Donation {
+  id            String   @id @default(uuid())
+  donorId       String
+  donor         Donor    @relation(fields: [donorId], references: [id], onDelete: Cascade)
+  amount        Float
+  date          DateTime @default(now())
+  programId     String
+  program       Program  @relation(fields: [programId], references: [id], onDelete: Cascade)
+  paymentMethod String   @default("Bank Transfer")
+  status        String   @default("Completed")
+  frequency     String   @default("One-time")
+  txHash        String?
+  createdAt     DateTime @default(now())
+
+  @@map("donations")
+}
+
+model Volunteer {
+  id             String                @id @default(uuid())
+  volunteerCode  String                @unique
+  name           String
+  email          String
+  phone          String?
+  state          String
+  city           String
+  skill          String
+  availability   String                @default("Weekends")
+  hoursLogged    Float                 @default(0)
+  eventsCount    Int                   @default(0)
+  rating         Float                 @default(5.0)
+  status         String                @default("Active")
+  organizationId String
+  organization   Organization          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  createdAt      DateTime              @default(now())
+  updatedAt      DateTime              @updatedAt
+
+  certificates   VolunteerCertificate[]
+  assignments    VolunteerAssignment[]
+
+  @@map("volunteers")
+}
+
+model VolunteerCertificate {
+  id              String    @id @default(uuid())
+  volunteerId     String
+  volunteer       Volunteer @relation(fields: [volunteerId], references: [id], onDelete: Cascade)
+  certificateNo   String    @unique
+  title           String
+  programName     String
+  issuedDate      DateTime  @default(now())
+  hoursRecognized Float
+
+  @@map("volunteer_certificates")
+}
+
+model VolunteerAssignment {
+  id          String    @id @default(uuid())
+  volunteerId String
+  volunteer   Volunteer @relation(fields: [volunteerId], references: [id], onDelete: Cascade)
+  programName String
+  role        String    @default("Field Volunteer")
+  assignedAt  DateTime  @default(now())
+  status      String    @default("ACTIVE") // ACTIVE, COMPLETED
+
+  @@map("volunteer_assignments")
+}
+
+model VolunteerEvent {
+  id                 String   @id @default(uuid())
+  title              String
+  location           String
+  date               DateTime
+  programId          String
+  program            Program  @relation(fields: [programId], references: [id], onDelete: Cascade)
+  volunteersAssigned Int      @default(0)
+  hoursSpent         Float    @default(0)
+  status             String   @default("Upcoming")
+  createdAt          DateTime @default(now())
+
+  @@map("volunteer_events")
+}
+
+model Expense {
+  id             String       @id @default(uuid())
+  category       String
+  amount         Float
+  date           DateTime     @default(now())
+  projectId      String
+  project        Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  approvedBy     String
+  vendor         String
+  receiptNumber  String?
+  organizationId String?
+  createdAt      DateTime     @default(now())
+
+  @@map("expenses")
+}
+
+model FundingSource {
+  id             String       @id @default(uuid())
+  sourceName     String
+  category       String
+  amount         Float
+  year           Int
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  createdAt      DateTime     @default(now())
+
+  @@map("funding_sources")
+}
+
+model ImpactMetric {
+  id                 String   @id @default(uuid())
+  programId          String
+  program            Program  @relation(fields: [programId], references: [id], onDelete: Cascade)
+  costPerBeneficiary Float
+  outcomeRate        Float
+  beneficiariesCount Int
+  spendLakhs         Float
+  updatedAt          DateTime @updatedAt
+
+  @@map("impact_metrics")
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  action    String
+  entity    String
+  entityId  String?
+  timestamp DateTime @default(now())
+  ipAddress String?
+
+  @@map("audit_logs")
+}
+
+model Notification {
+  id             String       @id @default(uuid())
+  title          String
+  message        String
+  type           String       @default("INFO") // GRANT_EXPIRY, BUDGET_THRESHOLD, UPCOMING_DEADLINE, VOLUNTEER_SHORTAGE, FAILED_IMPORT, SECURITY_ALERT
+  channel        String       @default("IN_APP") // IN_APP, EMAIL, BOTH
+  isRead         Boolean      @default(false)
+  emailSent      Boolean      @default(false)
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  createdAt      DateTime     @default(now())
+
+  @@map("notifications")
+}
