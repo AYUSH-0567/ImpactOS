@@ -26,9 +26,19 @@ const PORT = process.env.PORT || 5000;
 // Enable HTTP Response Compression for Production Speed
 app.use(compression());
 
-// 1. STRUCTURED LOGGING MIDDLEWARE
+// 1. STRUCTURED LOGGING & ORIGIN INSPECTION MIDDLEWARE
+const rawCorsEnv = process.env.CORS_ORIGIN;
+const allowedOrigins = rawCorsEnv
+  ? rawCorsEnv.split(',').map(o => o.trim())
+  : ['https://impactos-eta.vercel.app', 'http://localhost:5173', 'http://localhost:5000'];
+
+console.log(`🔒 Runtime process.env.CORS_ORIGIN: "${rawCorsEnv || ''}"`);
+console.log(`🔒 Parsed Allowed Origins Array:`, JSON.stringify(allowedOrigins));
+
 app.use((req, res, next) => {
   const start = Date.now();
+  const origin = req.headers.origin;
+  console.log(`🌐 [INCOMING] ${req.method} ${req.originalUrl} | Origin: ${origin || 'NONE'} | IP: ${req.ip || '127.0.0.1'}`);
   res.on('finish', () => {
     const duration = Date.now() - start;
     console.log(JSON.stringify({
@@ -37,13 +47,29 @@ app.use((req, res, next) => {
       url: req.originalUrl,
       status: res.statusCode,
       durationMs: duration,
-      ip: req.ip || req.headers['x-forwarded-for'] || '127.0.0.1'
+      origin: origin || 'NONE'
     }));
   });
   next();
 });
 
-// 2. SECURITY HEADERS (Helmet)
+// 2. PRODUCTION CORS MIDDLEWARE (Mounted before Helmet)
+app.use(cors({
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin) || allowedOrigins.includes('*') || origin.endsWith('.vercel.app')) {
+      return callback(null, origin);
+    }
+    console.warn(`[CORS REJECTED] Origin "${origin}" not in allowed list:`, allowedOrigins);
+    return callback(new Error(`CORS Violation: Origin ${origin} not permitted.`));
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'X-CSRF-Token'],
+  optionsSuccessStatus: 200
+}));
+
+// 3. SECURITY HEADERS (Helmet)
 app.use(helmet({
   contentSecurityPolicy: {
     directives: {
@@ -52,31 +78,10 @@ app.use(helmet({
       styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
       fontSrc: ["'self'", "https://fonts.gstatic.com"],
       imgSrc: ["'self'", "data:", "blob:", "https://*.tile.openstreetmap.org", "https://*.amazonaws.com"],
-      connectSrc: ["'self'", "http://localhost:5000", "http://localhost:5173", "https://*.vercel.app"]
+      connectSrc: ["'self'", "http://localhost:5000", "http://localhost:5173", "https://*.vercel.app", "https://*.up.railway.app"]
     }
   },
   crossOriginResourcePolicy: { policy: "cross-origin" }
-}));
-
-// 3. PRODUCTION CORS SECURITY & CREDENTIALS
-const allowedOrigins = process.env.CORS_ORIGIN
-  ? process.env.CORS_ORIGIN.split(',').map(o => o.trim())
-  : ['https://impactos-eta.vercel.app', 'http://localhost:5173', 'http://localhost:5000'];
-
-console.log('🔒 Production CORS Allowed Origins:', JSON.stringify(allowedOrigins));
-
-app.use(cors({
-  origin: (origin, callback) => {
-    if (!origin || allowedOrigins.includes(origin) || allowedOrigins.includes('*') || origin.endsWith('.vercel.app')) {
-      callback(null, true);
-    } else {
-      console.warn(`[CORS REJECTED] Origin ${origin} not in allowed list:`, allowedOrigins);
-      callback(new Error(`CORS Violation: Origin ${origin} not permitted.`));
-    }
-  },
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'X-CSRF-Token']
 }));
 
 app.use(cookieParser());
