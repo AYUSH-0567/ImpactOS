@@ -52,7 +52,7 @@ app.use(helmet({
       styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
       fontSrc: ["'self'", "https://fonts.gstatic.com"],
       imgSrc: ["'self'", "data:", "blob:", "https://*.tile.openstreetmap.org", "https://*.amazonaws.com"],
-      connectSrc: ["'self'", "http://localhost:5000", "http://localhost:5173", "https://*.impactos.org"]
+      connectSrc: ["'self'", "http://localhost:5000", "http://localhost:5173", "https://*.vercel.app"]
     }
   },
   crossOriginResourcePolicy: { policy: "cross-origin" }
