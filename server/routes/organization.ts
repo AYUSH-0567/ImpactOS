@@ -1,9 +1,8 @@
+import { prisma } from '../db.js';
 import { Router, Response } from 'express';
-import { PrismaClient } from '@prisma/client';
 import { authenticateToken, AuthenticatedRequest, requirePermission } from '../middleware/auth';
 
 const router = Router();
-const prisma = new PrismaClient();
 
 // 1. GET ORGANIZATION PROFILE
 router.get('/profile', authenticateToken, requirePermission('view:dashboard'), async (req: AuthenticatedRequest, res: Response) => {

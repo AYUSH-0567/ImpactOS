@@ -1,7 +1,6 @@
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '../server/db.js';
 import bcrypt from 'bcryptjs';
 
-const prisma = new PrismaClient();
 
 async function main() {
   console.log('🌱 Starting ImpactOS Multi-Tenant Database Seeding...');

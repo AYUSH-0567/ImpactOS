@@ -1,8 +1,7 @@
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '../db.js';
 import { KPICalculationService } from './kpiService';
 import { AIImpactAnalystService } from './aiAnalystService';
 
-const prisma = new PrismaClient();
 
 export interface AutomationTaskLog {
   stepName: string;

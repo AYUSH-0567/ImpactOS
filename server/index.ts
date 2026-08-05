@@ -1,9 +1,3 @@
-import 'dotenv/config';
-
-if (!process.env.DATABASE_URL) {
-  process.env.DATABASE_URL = "postgresql://neondb_owner:npg_Bk5OGMZe4sLE@ep-wild-hat-axbelksp.c-4.us-east-2.aws.neon.tech/neondb?sslmode=require";
-}
-
 import express from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';

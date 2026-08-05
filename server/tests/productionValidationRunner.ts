@@ -1,10 +1,9 @@
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '../db.js';
 import bcrypt from 'bcryptjs';
 import { KPICalculationService } from '../services/kpiService';
 import { QueryAssistantService } from '../services/queryAssistantService';
 import { AutomationPipelineService } from '../services/automationService';
 
-const prisma = new PrismaClient();
 
 export async function runProductionValidationAudit() {
   console.log('--------------------------------------------------');

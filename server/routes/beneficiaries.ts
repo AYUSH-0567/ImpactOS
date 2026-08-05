@@ -1,5 +1,5 @@
+import { prisma } from '../db.js';
 import { Router, Response } from 'express';
-import { PrismaClient } from '@prisma/client';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
@@ -7,7 +7,6 @@ import { authenticateToken, AuthenticatedRequest, requirePermission } from '../m
 import { AutomationPipelineService } from '../services/automationService';
 
 const router = Router();
-const prisma = new PrismaClient();
 
 // Multer Storage Setup
 const uploadDir = path.join(process.cwd(), 'public', 'uploads', 'documents');

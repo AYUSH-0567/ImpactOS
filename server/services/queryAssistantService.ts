@@ -1,6 +1,5 @@
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '../db.js';
 
-const prisma = new PrismaClient();
 
 export interface QueryAssistantResult {
   query: string;

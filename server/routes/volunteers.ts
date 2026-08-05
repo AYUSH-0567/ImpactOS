@@ -1,9 +1,8 @@
+import { prisma } from '../db.js';
 import { Router, Response } from 'express';
-import { PrismaClient } from '@prisma/client';
 import { authenticateToken, AuthenticatedRequest, requirePermission } from '../middleware/auth';
 
 const router = Router();
-const prisma = new PrismaClient();
 
 // 1. GET ALL VOLUNTEERS (Multi-Tenant Scoped, Search & Filters)
 router.get('/', authenticateToken, requirePermission('view:volunteers'), async (req: AuthenticatedRequest, res: Response) => {

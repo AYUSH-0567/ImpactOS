@@ -1,9 +1,8 @@
+import { prisma } from '../db.js';
 import { Router, Response } from 'express';
-import { PrismaClient } from '@prisma/client';
 import { authenticateToken, AuthenticatedRequest } from '../middleware/auth';
 
 const router = Router();
-const prisma = new PrismaClient();
 
 // 1. GET ALL NOTIFICATIONS & UNREAD COUNT (Scoped to organizationId)
 router.get('/', authenticateToken, async (req: AuthenticatedRequest, res: Response) => {

@@ -1,12 +1,11 @@
+import { prisma } from '../db.js';
 import { Router, Response } from 'express';
-import { PrismaClient } from '@prisma/client';
 import { authenticateToken, AuthenticatedRequest, requirePermission } from '../middleware/auth';
 import { KPICalculationService } from '../services/kpiService';
 import { AIImpactAnalystService } from '../services/aiAnalystService';
 import { QueryAssistantService } from '../services/queryAssistantService';
 
 const router = Router();
-const prisma = new PrismaClient();
 
 // GET LIVE DASHBOARD KPIS & CALCULATED STATS
 router.get('/dashboard-kpis', authenticateToken, requirePermission('view:dashboard'), async (req: AuthenticatedRequest, res: Response) => {

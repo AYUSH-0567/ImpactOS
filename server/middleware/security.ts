@@ -1,9 +1,8 @@
+import { prisma } from '../db.js';
 import { Request, Response, NextFunction } from 'express';
 import rateLimit from 'express-rate-limit';
-import { PrismaClient } from '@prisma/client';
 import { AuthenticatedRequest } from './auth';
 
-const prisma = new PrismaClient();
 
 // 1. RATE LIMITERS
 export const authLimiter = rateLimit({

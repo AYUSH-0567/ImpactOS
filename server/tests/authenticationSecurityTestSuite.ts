@@ -1,7 +1,6 @@
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '../db.js';
 import bcrypt from 'bcryptjs';
 
-const prisma = new PrismaClient();
 
 export async function runAuthSecurityTestSuite() {
   console.log('--------------------------------------------------');

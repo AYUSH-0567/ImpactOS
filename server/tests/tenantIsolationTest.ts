@@ -1,7 +1,6 @@
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '../db.js';
 import bcrypt from 'bcryptjs';
 
-const prisma = new PrismaClient();
 
 async function runTenantIsolationAudit() {
   console.log('🔒 Running Multi-Tenant Isolation Audit & Verification Test...\n');

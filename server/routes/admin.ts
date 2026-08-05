@@ -1,9 +1,8 @@
+import { prisma } from '../db.js';
 import { Router, Response } from 'express';
-import { PrismaClient } from '@prisma/client';
 import { authenticateToken, AuthenticatedRequest, requirePermission } from '../middleware/auth';
 
 const router = Router();
-const prisma = new PrismaClient();
 
 // BULK DATA IMPORT (Scoped strictly to req.user.organizationId)
 router.post('/import/:entityType', authenticateToken, requirePermission('admin:import'), async (req: AuthenticatedRequest, res: Response) => {

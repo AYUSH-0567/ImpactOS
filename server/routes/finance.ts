@@ -1,9 +1,8 @@
+import { prisma } from '../db.js';
 import { Router, Response } from 'express';
-import { PrismaClient } from '@prisma/client';
 import { authenticateToken, AuthenticatedRequest, requirePermission } from '../middleware/auth';
 
 const router = Router();
-const prisma = new PrismaClient();
 
 // 1. GET FINANCIAL KPIS & SUMMARY (Isolated to view:finance role permission)
 router.get('/summary', authenticateToken, requirePermission('view:finance'), async (req: AuthenticatedRequest, res: Response) => {
