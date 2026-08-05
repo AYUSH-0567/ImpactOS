@@ -2,6 +2,7 @@ import { Router, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { prisma } from '../db.js';
+import { authenticateToken, AuthenticatedRequest, requirePermission } from '../middleware/auth.js';
 
 const router = Router();
 const JWT_SECRET = process.env.JWT_SECRET || 'impactos_production_secret_key_2026_jwt_auth';

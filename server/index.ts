@@ -23,8 +23,6 @@ import financeRoutes from './routes/finance';
 import notificationRoutes from './routes/notifications';
 import { apiLimiter, authLimiter, enforceCsrfHeader } from './middleware/security';
 
-dotenv.config();
-
 const app = express();
 const PORT = process.env.PORT || 5000;
 
