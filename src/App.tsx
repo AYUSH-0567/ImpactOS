@@ -154,7 +154,11 @@ export function App() {
   };
 
   if (viewPublicWebsite) {
-    return <PublicWebsite onLaunchApp={() => setViewPublicWebsite(false)} />;
+    return (
+      <React.Suspense fallback={<div className="p-12 text-center text-xs font-mono text-slate-400">Loading website...</div>}>
+        <PublicWebsite onLaunchApp={() => setViewPublicWebsite(false)} />
+      </React.Suspense>
+    );
   }
 
   // Render Login Page if unauthenticated

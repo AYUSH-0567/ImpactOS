@@ -1,16 +1,26 @@
 {
   "version": 2,
-  "buildCommand": "npm run build",
-  "outputDirectory": "dist",
-  "framework": "vite",
   "rewrites": [
     {
-      "source": "/api/v1/:path*",
-      "destination": "https://impactos-api-production.up.railway.app/api/v1/:path*"
+      "source": "/api/v1/(.*)",
+      "destination": "https://impactos-api-production.up.railway.app/api/v1/$1"
     },
     {
       "source": "/(.*)",
       "destination": "/index.html"
+    },
+    {
+      "source": "/(.*)",
+      "destination": {
+        "type": "service",
+        "service": "web"
+      }
     }
-  ]
+  ],
+  "services": {
+    "web": {
+      "root": ".",
+      "framework": "vite"
+    }
+  }
 }
