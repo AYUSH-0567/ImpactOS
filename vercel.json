@@ -2,25 +2,12 @@
   "version": 2,
   "rewrites": [
     {
-      "source": "/api/v1/(.*)",
-      "destination": "https://impactos-api-production.up.railway.app/api/v1/$1"
+      "source": "/api/v1/:path*",
+      "destination": "https://impactos-api-production.up.railway.app/api/v1/:path*"
     },
     {
-      "source": "/(.*)",
+      "source": "/((?!assets/|favicon.svg|.*\\.(?:js|css|png|jpg|jpeg|gif|ico|svg|json|woff|woff2|ttf|eot)).*)",
       "destination": "/index.html"
-    },
-    {
-      "source": "/(.*)",
-      "destination": {
-        "type": "service",
-        "service": "web"
-      }
     }
-  ],
-  "services": {
-    "web": {
-      "root": ".",
-      "framework": "vite"
-    }
-  }
+  ]
 }
